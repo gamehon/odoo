@@ -833,8 +833,13 @@ class SaleOrder(models.Model):
 
     def onchange(self, values, field_names, fields_spec):
         self_with_context = self
-        if not field_names: # Some warnings should not be displayed for the first onchange
-            self_with_context = self.with_context(sale_onchange_first_call=True)
+        if not field_names:
+            self_with_context = self.with_context(
+                # Some warnings should not be displayed for the first onchange
+                sale_onchange_first_call=True,
+                # invoice & delivery address with higher `customer_rank` should take priority
+                res_partner_search_mode='customer',
+            )
         return super(SaleOrder, self_with_context).onchange(values, field_names, fields_spec)
 
     @api.onchange('commitment_date', 'expected_date')
@@ -956,7 +961,7 @@ class SaleOrder(models.Model):
                 update_commands = [Command.update(
                     order_line.id,
                     {'sequence': line.sequence + len(selected_combo_items) + line_index - index},
-                ) for line_index, order_line in enumerate(self.order_line) if line_index > index]
+                ) for line_index, order_line in enumerate(self.order_line.filtered(lambda l: not l.combo_item_id)) if line_index > index]
 
                 # Clear `selected_combo_items` to avoid applying the same changes multiple times.
                 line.selected_combo_items = False
@@ -1458,7 +1463,7 @@ class SaleOrder(models.Model):
         return action
 
     def _get_invoice_grouping_keys(self):
-        return ['company_id', 'partner_id', 'currency_id']
+        return ['company_id', 'partner_id', 'currency_id', 'fiscal_position_id']
 
     def _nothing_to_invoice_error_message(self):
         return _(
@@ -2217,7 +2222,7 @@ class SaleOrder(models.Model):
                 'product_uom_qty': quantity,
                 'sequence': ((self.order_line and self.order_line[-1].sequence + 1) or 10),  # put it at the end of the order
             })
-        return sol.price_unit * (1-(sol.discount or 0.0)/100.0)
+        return sol._get_discounted_price()
 
     #=== TOOLING ===#
 

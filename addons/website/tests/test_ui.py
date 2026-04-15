@@ -250,6 +250,7 @@ class TestUiTranslate(odoo.tests.HttpCase):
             'code': 'pa_GB',
             'iso_code': 'pa_GB',
             'url_code': 'pa_GB',
+            'direction': 'rtl',
         }, {
             'name': 'Fake User Lang',
             'code': 'fu_GB',
@@ -277,6 +278,7 @@ class TestUiTranslate(odoo.tests.HttpCase):
 
         self.start_tour(f"/website/force/{website.id}", 'snippet_translation', login='admin')
         self.start_tour(f"/website/force/{website_2.id}", 'snippet_translation_changing_lang', login='admin')
+        self.start_tour(f"/website/force/{website.id}", 'snippet_dialog_rtl', login='admin')
 
 
 @odoo.tests.common.tagged('post_install', '-at_install')
@@ -495,9 +497,6 @@ class TestUi(odoo.tests.HttpCase):
 
     def test_14_carousel_snippet_content_removal(self):
         self.start_tour(self.env['website'].get_client_action_url('/'), 'carousel_content_removal', login='admin')
-
-    def test_15_website_link_tools(self):
-        self.start_tour(self.env['website'].get_client_action_url('/'), 'link_tools', login="admin")
 
     def test_16_website_edit_megamenu(self):
         self.start_tour(self.env['website'].get_client_action_url('/'), 'edit_megamenu', login='admin')
@@ -759,3 +758,9 @@ class TestUi(odoo.tests.HttpCase):
 
     def test_popup_visibility_option(self):
         self.start_tour("/", "website_popup_visibility_option", login="admin")
+
+    def test_hiding_sidebar_header(self):
+        self.start_tour("/", "hide_sidebar_header", login="admin")
+
+    def test_header_color_and_undo_redo_issue(self):
+        self.start_tour("/", "undo_redo_header_oriented_issue", login="admin")
